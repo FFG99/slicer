@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://slicer.local/schemas/job-spec.json",
+  "title": "JobSpec",
+  "description": "Input for a computation run submitted to the worker",
+  "type": "object",
+  "required": ["calculation_type", "system", "parameters"],
+  "additionalProperties": false,
+  "properties": {
+    "calculation_type": {
+      "type": "string",
+      "description": "Registry key, e.g. attraction_map, phase_portrait"
+    },
+    "system": {
+      "type": "string",
+      "description": "Dynamical system plugin name, e.g. henon"
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Calculation-specific parameters (validated by calculation registry)",
+      "additionalProperties": true
+    },
+    "parent_run_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Optional link to a parent run (e.g. region refinement)"
+    }
+  }
+}

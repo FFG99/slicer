@@ -1,0 +1,37 @@
+# Dynamical system plugins: parameter and variable names for UI/API.
+# Keep in sync with core/systems/*.cpp plugins.
+
+henon:
+  builtin: true
+  description: Hénon map (discrete 2D)
+  parameters:
+    - a
+    - b
+  variables:
+    - x
+    - y
+
+chialvo:
+  builtin: true
+  description: Chialvo map
+  reference:
+    citation: 'Chialvo, Dante R. (1995). "Generic excitable dynamics on a two-dimensional map". Chaos, Solitons & Fractals 5(3), 461–479.'
+    url: https://doi.org/10.1016/0960-0779(94)00075-O
+  parameters:
+    - a
+    - b
+    - c
+    - I
+  variables:
+    - x
+    - y
+
+universal2d:
+  builtin: true
+  description: Universal 2D map (S,J-parameter quadratic map)
+  parameters:
+    - S
+    - J
+  variables:
+    - x
+    - y

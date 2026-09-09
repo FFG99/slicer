@@ -1,0 +1,410 @@
+# Calculation registry: contract per calculation_type.
+# C++ implements writers internally (Heatmap, trajectory store, etc.);
+# only calculation_type is exposed in API and schemas.
+
+attraction_map:
+  description: >
+    Map of attractor types over a 2D parameter sweep (bifurcation-style heatmap).
+  parameters:
+    - name: escape_threshold
+      type: number
+      required: false
+      default: 1000000
+      range: [0.000000001, 1.0e+300]
+      description: Порог убегания |x| для каждой переменной
+    - name: first_param
+      type: string
+      required: true
+      description: Name of the first swept parameter
+      options_source: system.parameters
+    - name: second_param
+      type: string
+      required: true
+      description: Name of the second swept parameter
+      options_source: system.parameters
+    - name: first_param_min
+      type: number
+      required: true
+    - name: first_param_max
+      type: number
+      required: true
+    - name: second_param_min
+      type: number
+      required: true
+    - name: second_param_max
+      type: number
+      required: true
+    - name: steps
+      type: integer
+      required: true
+      range: [8, 8192]
+    - name: static_parameters
+      type: object
+      required: false
+      description: Fixed system parameters not swept on axes
+    - name: starting_point
+      type: array
+      required: true
+      description: Initial state vector for integration at each grid point
+    - name: num_iter_transient
+      type: integer
+      required: true
+      range: [0, 10000000]
+    - name: num_iter_attractor
+      type: integer
+      required: true
+      range: [1, 10000000]
+    - name: first_var
+      type: string
+      required: true
+      description: First variable swept when counting attractors
+      options_source: system.variables
+    - name: second_var
+      type: string
+      required: true
+      options_source: system.variables
+    - name: first_var_min
+      type: number
+      required: true
+    - name: first_var_max
+      type: number
+      required: true
+    - name: second_var_min
+      type: number
+      required: true
+    - name: second_var_max
+      type: number
+      required: true
+    - name: var_steps
+      type: integer
+      required: true
+      range: [2, 512]
+      description: Resolution of the initial-condition scan inside each parameter cell
+    - name: accuracy
+      type: number
+      required: false
+      default: 0.01
+    - name: period_verification_cycles
+      type: integer
+      required: false
+      default: 2
+      range: [1, 8]
+    - name: match_coverage
+      type: number
+      required: false
+      default: 0.75
+      range: [0.5, 1.0]
+  artifact:
+    hdf5_path: /artifacts/main
+    datasets:
+      values: "[steps, steps]"
+      composition: "[steps, steps] (packed EP/P/NP composition)"
+      periods: "[steps, steps] (exact attractor period signatures)"
+  frame:
+    space: parameter_plane
+    sweep_roles: [sweep, sweep]
+  overlay_with:
+    - attraction_map
+
+phase_portrait:
+  description: >
+    Iterate a discrete map from given initial conditions (phase portrait or time series).
+  parameters:
+    - name: escape_threshold
+      type: number
+      required: false
+      default: 1000000
+      range: [0.000000001, 1.0e+300]
+      description: Порог убегания |x| для каждой переменной
+    - name: parameters
+      type: object
+      required: true
+      description: Full system parameter set
+    - name: initial_conditions
+      type: array
+      required: true
+      description: Initial state vector
+    - name: num_iter_transient
+      type: integer
+      required: false
+      default: 0
+      range: [0, 10000000]
+      description: Iterations to discard before collecting the phase portrait
+    - name: num_iter_attractor
+      type: integer
+      required: true
+      range: [1, 10000000]
+      description: Number of post-transient iterations to store for phase_plane mode
+    - name: t_max
+      type: integer
+      required: false
+      range: [1, 100000000]
+      description: Number of iteration steps for time_series mode
+    - name: output_mode
+      type: string
+      required: true
+      allowed_values: [phase_plane, time_series]
+  artifact:
+    hdf5_path: /artifacts/main
+    datasets:
+      state: "[N, D]"
+      t: "[N]"
+  frame:
+    space: phase_plane
+    sweep_roles: []
+  overlay_with:
+    - phase_portrait
+    - pool_of_attraction
+
+pool_of_attraction:
+  description: >
+    Basins of attraction over a 2D initial-condition sweep (legacy AP).
+  parameters:
+    - name: escape_threshold
+      type: number
+      required: false
+      default: 1000000
+      range: [0.000000001, 1.0e+300]
+      description: Порог убегания |x| для каждой переменной
+    - name: first_var
+      type: string
+      required: true
+      options_source: system.variables
+    - name: second_var
+      type: string
+      required: true
+      options_source: system.variables
+    - name: first_var_min
+      type: number
+      required: true
+    - name: first_var_max
+      type: number
+      required: true
+    - name: second_var_min
+      type: number
+      required: true
+    - name: second_var_max
+      type: number
+      required: true
+    - name: steps
+      type: integer
+      required: true
+      range: [8, 8192]
+    - name: parameters
+      type: object
+      required: true
+      description: Fixed system parameters
+    - name: starting_point
+      type: array
+      required: true
+      description: Base initial state; swept variables are overwritten per cell
+    - name: num_iter_transient
+      type: integer
+      required: true
+      default: 50000
+      range: [0, 10000000]
+    - name: num_iter_attractor
+      type: integer
+      required: true
+      default: 5000
+      range: [1, 10000000]
+    - name: classification_mode
+      type: string
+      required: false
+      default: ncf
+      allowed_values: [ncf, period, lyapunov]
+      description: >
+        Attractor equivalence: ncf (omega-limit set matching at a tolerance
+        self-calibrated from the orbit samples), period (verified cycle
+        length), lyapunov (largest Lyapunov exponent per cell)
+    - name: accuracy
+      type: number
+      required: false
+      default: 0.01
+    - name: period_verification_cycles
+      type: integer
+      required: false
+      default: 2
+      range: [1, 8]
+      description: Full cycle repeats that must agree at the end of the attractor window
+    - name: match_coverage
+      type: number
+      required: false
+      default: 0.75
+      range: [0.5, 1.0]
+      description: Fraction of each omega-limit sample that must match in both directions
+    - name: num_lyapunov_exponents
+      type: integer
+      required: false
+      default: 1
+      range: [1, 32]
+      description: Used when classification_mode is lyapunov
+    - name: preparation_force
+      type: number
+      required: false
+      default: 0.00001
+      description: Used when classification_mode is lyapunov
+  artifact:
+    hdf5_path: /artifacts/main
+    datasets:
+      values: "[steps, steps]"
+  frame:
+    space: ic_plane
+    sweep_roles: [sweep, sweep]
+  overlay_with:
+    - pool_of_attraction
+    - phase_portrait
+
+lyapunov_spectrum:
+  description: >
+    Largest Lyapunov exponent over a 2D parameter sweep (legacy LLE).
+  parameters:
+    - name: escape_threshold
+      type: number
+      required: false
+      default: 1000000
+      range: [0.000000001, 1.0e+300]
+      description: Порог убегания |x| для каждой переменной
+    - name: first_param
+      type: string
+      required: true
+      options_source: system.parameters
+    - name: second_param
+      type: string
+      required: true
+      options_source: system.parameters
+    - name: first_param_min
+      type: number
+      required: true
+    - name: first_param_max
+      type: number
+      required: true
+    - name: second_param_min
+      type: number
+      required: true
+    - name: second_param_max
+      type: number
+      required: true
+    - name: steps
+      type: integer
+      required: true
+      range: [8, 8192]
+    - name: static_parameters
+      type: object
+      required: false
+    - name: starting_point
+      type: array
+      required: true
+    - name: num_iter_transient
+      type: integer
+      required: true
+      range: [0, 10000000]
+    - name: num_iter_attractor
+      type: integer
+      required: true
+      range: [1, 10000000]
+    - name: num_lyapunov_exponents
+      type: integer
+      required: false
+      default: 1
+      range: [1, 32]
+    - name: preparation_force
+      type: number
+      required: false
+      default: 0.00001
+    - name: reset_after_escape
+      type: boolean
+      required: false
+      default: false
+      description: Reset to the starting point after an escaped trajectory during continuation
+    - name: direction
+      type: string
+      required: false
+      default: n
+      allowed_values: [n, r, l, u, d]
+      description: Continuation direction along parameter axes
+  artifact:
+    hdf5_path: /artifacts/main
+    datasets:
+      values: "[steps, steps]"
+      dtype: float64
+  frame:
+    space: parameter_plane
+    sweep_roles: [sweep, sweep]
+  overlay_with:
+    - lyapunov_spectrum
+    - attraction_map
+
+dynamic_modes:
+  description: >
+    Detected period (dynamic mode) over a 2D parameter sweep (legacy DM).
+  parameters:
+    - name: escape_threshold
+      type: number
+      required: false
+      default: 1000000
+      range: [0.000000001, 1.0e+300]
+      description: Порог убегания |x| для каждой переменной
+    - name: first_param
+      type: string
+      required: true
+      options_source: system.parameters
+    - name: second_param
+      type: string
+      required: true
+      options_source: system.parameters
+    - name: first_param_min
+      type: number
+      required: true
+    - name: first_param_max
+      type: number
+      required: true
+    - name: second_param_min
+      type: number
+      required: true
+    - name: second_param_max
+      type: number
+      required: true
+    - name: steps
+      type: integer
+      required: true
+      range: [8, 8192]
+    - name: static_parameters
+      type: object
+      required: false
+    - name: starting_point
+      type: array
+      required: true
+    - name: num_iter_transient
+      type: integer
+      required: true
+      range: [0, 10000000]
+    - name: num_iter_attractor
+      type: integer
+      required: true
+      range: [1, 10000000]
+    - name: accuracy
+      type: number
+      required: false
+      default: 0.01
+    - name: reset_after_escape
+      type: boolean
+      required: false
+      default: false
+      description: Reset to the starting point after an escaped trajectory during continuation
+    - name: direction
+      type: string
+      required: false
+      default: n
+      allowed_values: [n, r, l, u, d]
+      description: Continuation direction along parameter axes
+  artifact:
+    hdf5_path: /artifacts/main
+    datasets:
+      values: "[steps, steps]"
+  frame:
+    space: parameter_plane
+    sweep_roles: [sweep, sweep]
+  overlay_with:
+    - dynamic_modes
+    - attraction_map

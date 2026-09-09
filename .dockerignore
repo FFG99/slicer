@@ -1,0 +1,15 @@
+# Docker build context (repo root)
+.git
+**/.venv
+**/__pycache__
+**/.pytest_cache
+reference/
+.DS_Store
+
+# Never copy host CMake cache into Linux builder
+core/build
+
+patent/
+**/.env
+**/node_modules
+**/dist

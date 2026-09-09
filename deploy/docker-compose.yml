@@ -1,0 +1,3 @@
+# Compatibility entry point; run docker compose up -d --build from the repository root.
+include:
+  - ../compose.yaml

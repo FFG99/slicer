@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://slicer.local/schemas/coordinate-frame.json",
+  "title": "CoordinateFrame",
+  "description": "Physical coordinate system of an artifact; used for rendering and layer overlay",
+  "type": "object",
+  "required": ["system", "space", "axes"],
+  "additionalProperties": false,
+  "properties": {
+    "system": {
+      "type": "string",
+      "description": "Dynamical system name"
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Fixed parameter values for this artifact (non-swept dimensions)",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "space": {
+      "type": "string",
+      "enum": [
+        "parameter_plane",
+        "ic_plane",
+        "phase_plane",
+        "time_series"
+      ],
+      "description": "Semantic space: parameter sweep, initial-condition plane, phase portrait, or time series"
+    },
+    "axes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/axis"
+      }
+    },
+    "cell_centered": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, grid values represent cell centers; otherwise corner-aligned samples"
+    }
+  },
+  "$defs": {
+    "axis": {
+      "type": "object",
+      "required": ["name", "role"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Variable or parameter name, e.g. a, x, t"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["sweep", "state_variable", "time", "value"],
+          "description": "Axis semantic role"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Index in state vector (for state_variable role)"
+        },
+        "min": {
+          "type": "number",
+          "description": "Domain lower bound (sweep axes, time range)"
+        },
+        "max": {
+          "type": "number",
+          "description": "Domain upper bound"
+        },
+        "steps": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of samples along a sweep axis"
+        }
+      }
+    }
+  }
+}
