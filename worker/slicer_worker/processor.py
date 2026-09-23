@@ -4,6 +4,7 @@ import subprocess
 import time
 import traceback
 import uuid
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Event, Thread
@@ -247,7 +248,17 @@ def wait_for_process(
     process: subprocess.Popen[str],
     run_id: uuid.UUID,
     error_lines: list[str],
+    stdout_chunks: deque[str],
 ) -> int | None:
+    # Plugins may print during initialization or integration. Drain stdout while
+    # waiting so a full pipe cannot block the child and stall the run queue.
+    def drain_stdout() -> None:
+        if process.stdout is not None:
+            for chunk in iter(lambda: process.stdout.read(4096), ""):
+                stdout_chunks.append(chunk)
+
+    stdout_thread = Thread(target=drain_stdout, daemon=True)
+    stdout_thread.start()
     stop_event = Event()
     stderr_thread = Thread(
         target=drain_process_stderr,
@@ -275,6 +286,7 @@ def wait_for_process(
     finally:
         stop_event.set()
         stderr_thread.join(timeout=1.0)
+        stdout_thread.join(timeout=1.0)
 
 
 def execute_run(run: RunRecord) -> None:
@@ -306,6 +318,7 @@ def execute_run(run: RunRecord) -> None:
 
     process: subprocess.Popen[str] | None = None
     stderr_errors: list[str] = []
+    stdout_chunks: deque[str] = deque(maxlen=16)
     _set_current_run(run.id)
     RUNS_RUNNING.set(1)
     try:
@@ -314,9 +327,10 @@ def execute_run(run: RunRecord) -> None:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            errors="replace",
         )
         _set_current_process(process)
-        returncode = wait_for_process(process, run.id, stderr_errors)
+        returncode = wait_for_process(process, run.id, stderr_errors, stdout_chunks)
         if returncode is None:
             if _shutdown_requested and get_run_status(run.id) == "running":
                 mark_run_failed(run.id, INTERRUPTED_MESSAGE)
@@ -324,8 +338,8 @@ def execute_run(run: RunRecord) -> None:
 
         if returncode != 0:
             details = "\n".join(stderr_errors).strip()
-            if not details and process.stdout:
-                details = process.stdout.read().strip()
+            if not details:
+                details = "".join(stdout_chunks).strip()
             details = details or f"slicer exited with code {returncode}"
             mark_run_failed(run.id, details)
             logger.error("Run %s failed: %s", run.id, details)
@@ -345,6 +359,11 @@ def execute_run(run: RunRecord) -> None:
         RUNS_RUNNING.set(0)
         if process is not None and process.poll() is None:
             terminate_process(process)
+        if process is not None:
+            if process.stdout is not None:
+                process.stdout.close()
+            if process.stderr is not None:
+                process.stderr.close()
         job_path.unlink(missing_ok=True)
         artifact_path.unlink(missing_ok=True)
 
