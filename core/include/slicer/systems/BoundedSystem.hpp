@@ -9,12 +9,22 @@ namespace slicer {
 class BoundedSystem final : public SystemBase {
  public:
   BoundedSystem(SystemPtr system, double threshold)
-      : system_(std::move(system)), threshold_(threshold) {}
+      : system_(std::move(system)), threshold_(threshold),
+        dimension_(system_->get_variable_names().size()) {}
   std::vector<double> evaluate(const std::vector<double>& state,
                                const std::vector<double>& parameters) override {
+    if (state.size() != dimension_) {
+      throw std::invalid_argument("System '" + get_name() +
+          "' state dimension mismatch: expected " + std::to_string(dimension_) +
+          ", got " + std::to_string(state.size()));
+    }
     if (escaped(state)) return divergent(state.size());
     auto result = system_->evaluate(state, parameters);
-    if (result.size() != state.size()) throw std::runtime_error("System changed state dimension");
+    if (result.size() != state.size()) {
+      throw std::runtime_error("System '" + get_name() +
+          "' changed state dimension: expected " + std::to_string(state.size()) +
+          ", got " + std::to_string(result.size()));
+    }
     return escaped(result) ? divergent(result.size()) : result;
   }
   std::string get_name() const override { return system_->get_name(); }
@@ -30,5 +40,6 @@ class BoundedSystem final : public SystemBase {
   }
   SystemPtr system_;
   double threshold_;
+  size_t dimension_;
 };
 }

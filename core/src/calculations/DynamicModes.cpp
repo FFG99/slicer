@@ -39,6 +39,13 @@ void DynamicModesCalculator::initialize_system() {
     throw std::runtime_error("Failed to load system: " + system_);
   }
 
+  const auto dim = dynamical_system_->get_variable_names().size();
+  if (params_.starting_point.size() != dim) {
+    throw std::invalid_argument("starting_point must match system dimension: expected " +
+                                std::to_string(dim) + ", got " +
+                                std::to_string(params_.starting_point.size()));
+  }
+
   const auto param_names = dynamical_system_->get_parameter_names();
   params_base_.resize(param_names.size(), std::numeric_limits<double>::quiet_NaN());
   for (size_t i = 0; i < param_names.size(); ++i) {

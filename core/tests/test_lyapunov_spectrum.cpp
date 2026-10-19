@@ -12,6 +12,14 @@
 
 namespace fs = std::filesystem;
 
+TEST(LyapunovSpectrumTest, RejectsWrongStateDimensionBeforeRunning) {
+  slicer::LyapunovSpectrumParams params;
+  params.starting_point = {0.1};
+  params.num_iter_attractor = 10;
+  EXPECT_THROW(slicer::LyapunovSpectrumCalculator(params, "henon", SLICER_SYSTEMS_DIR),
+               std::invalid_argument);
+}
+
 TEST(LyapunovSpectrumTest, SmallGridProducesFloatArtifact) {
   const fs::path path =
       fs::temp_directory_path() / "slicer_test_lyapunov_spectrum.h5";

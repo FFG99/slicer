@@ -12,6 +12,14 @@
 
 namespace fs = std::filesystem;
 
+TEST(DynamicModesTest, RejectsWrongStateDimensionBeforeRunning) {
+  slicer::DynamicModesParams params;
+  params.starting_point = {0.1};
+  params.num_iter_attractor = 10;
+  EXPECT_THROW(slicer::DynamicModesCalculator(params, "henon", SLICER_SYSTEMS_DIR),
+               std::invalid_argument);
+}
+
 TEST(DynamicModesTest, SmallGridProducesArtifact) {
   const fs::path path = fs::temp_directory_path() / "slicer_test_dynamic_modes.h5";
 

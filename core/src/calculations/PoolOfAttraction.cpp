@@ -44,6 +44,12 @@ void PoolOfAttractionCalculator::initialize_system() {
   }
 
   base_initial_conditions_ = params_.starting_point;
+  const auto dim = dynamical_system_->get_variable_names().size();
+  if (base_initial_conditions_.size() != dim) {
+    throw std::invalid_argument("starting_point must match system dimension: expected " +
+                                std::to_string(dim) + ", got " +
+                                std::to_string(base_initial_conditions_.size()));
+  }
 
   if (params_.classification_mode == PoolClassificationMode::Lyapunov &&
       params_.num_lyapunov_exponents > dynamical_system_->get_variable_names().size()) {

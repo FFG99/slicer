@@ -108,6 +108,12 @@ def _validate_parameter_value(
     elif param_type == "array":
         if not isinstance(value, list):
             raise ComputationValidationError(f"Parameter '{name}' must be an array")
+        if name in {"starting_point", "initial_conditions"}:
+            dimension = len(system_def.get("variables", []))
+            if len(value) != dimension:
+                raise ComputationValidationError(
+                    f"Parameter '{name}' must match system dimension: expected {dimension}, got {len(value)}"
+                )
     elif param_type == "object":
         if not isinstance(value, dict):
             raise ComputationValidationError(f"Parameter '{name}' must be an object")

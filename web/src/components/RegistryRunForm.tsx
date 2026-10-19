@@ -11,6 +11,7 @@ import { CollapsibleSection } from "./CollapsibleSection";
 import { NumberInput } from "./NumberInput";
 import type { RegistryCalculation, RegistryParameter, SystemDefinition } from "../types";
 import { systemDefaultParameters } from "../types";
+import { normalizeStartingPoint } from "../lib/startingPoint";
 
 interface RegistryRunFormProps {
   calculationTypes: string[];
@@ -182,7 +183,7 @@ function StartingPointFields({
   onChange: (parameters: Record<string, unknown>) => void;
 }) {
   const variables = systemInfo.variables;
-  const point = (parameters.starting_point as number[]) ?? [];
+  const point = normalizeStartingPoint(parameters.starting_point, systemInfo);
 
   return (
     <div className="field-section field-wide">
@@ -195,9 +196,6 @@ function StartingPointFields({
             disabled={disabled}
             onChange={(value) => {
               const next = [...point];
-              while (next.length < variables.length) {
-                next.push(0.1);
-              }
               next[index] = value;
               onChange({ ...parameters, starting_point: next });
             }}
@@ -310,6 +308,9 @@ export function RegistryRunForm({
         setSystemInfo(info);
 
         const merged = { ...parameters };
+        if (calc.parameters.some((param) => param.name === STARTING_POINT_KEY)) {
+          merged.starting_point = normalizeStartingPoint(merged.starting_point, info);
+        }
         let changed = false;
         for (const param of calc.parameters) {
           if (param.name === STATIC_PARAMETERS_KEY || param.name === STARTING_POINT_KEY) {
@@ -347,7 +348,10 @@ export function RegistryRunForm({
       onChange(next);
       return;
     }
-    onChange(withSyncedStaticParameters(next, systemInfo.parameters, system));
+    const normalized = definition?.parameters.some((param) => param.name === STARTING_POINT_KEY)
+      ? { ...next, starting_point: normalizeStartingPoint(next.starting_point, systemInfo) }
+      : next;
+    onChange(withSyncedStaticParameters(normalized, systemInfo.parameters, system));
   }
 
   function updateField(name: string, value: unknown) {

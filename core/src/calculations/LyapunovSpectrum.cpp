@@ -41,6 +41,11 @@ void LyapunovSpectrumCalculator::initialize_system() {
   }
 
   const auto dim = dynamical_system_->get_variable_names().size();
+  if (params_.starting_point.size() != dim) {
+    throw std::invalid_argument("starting_point must match system dimension: expected " +
+                                std::to_string(dim) + ", got " +
+                                std::to_string(params_.starting_point.size()));
+  }
   if (params_.num_lyapunov_exponents > dim) {
     throw std::invalid_argument("num_lyapunov_exponents exceeds system dimension");
   }
