@@ -1,0 +1,13 @@
+{
+  "calculation_type": "fixed_point_diagram",
+  "system": "chialvo",
+  "parameters": {
+    "start": {"a": 0.9, "b": 0.2, "c": 0.18, "I": 0.05},
+    "end": {"a": 0.9, "b": 0.2, "c": 0.21, "I": 0.05},
+    "state_min": [0.0, -1.0],
+    "state_max": [1.0, 3.0],
+    "steps": 400,
+    "seeds_per_axis": 7,
+    "max_iterations": 40
+  }
+}

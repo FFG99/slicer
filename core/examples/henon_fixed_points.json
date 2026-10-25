@@ -1,0 +1,16 @@
+{
+  "calculation_type": "fixed_point_diagram",
+  "system": "henon",
+  "parameters": {
+    "start": {"a": 0.1, "b": 0.3},
+    "end": {"a": 1.5, "b": 0.3},
+    "state_min": [-10.0, -4.0],
+    "state_max": [10.0, 4.0],
+    "steps": 201,
+    "seeds_per_axis": 9,
+    "max_iterations": 40,
+    "tolerance": 1e-10,
+    "derivative_step": 1e-5,
+    "stability_tolerance": 1e-6
+  }
+}

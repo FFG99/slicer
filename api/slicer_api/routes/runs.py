@@ -17,6 +17,27 @@ from slicer_api.systems_registry import load_systems_registry
 router = APIRouter(prefix="/runs", tags=["runs"])
 
 
+@router.get("/{run_id}/fixed-points")
+def get_fixed_points(
+    run_id: uuid.UUID,
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=1000, ge=1, le=1000),
+    db: Session = Depends(get_db),
+) -> dict:
+    from slicer_api.fixed_points import read_fixed_points
+    run = _get_visible_run(run_id, db)
+    if run.calculation_type != "fixed_point_diagram":
+        raise HTTPException(status_code=400, detail="Run is not a fixed-point diagram")
+    if run.status != "done" or not run.artifact_key:
+        raise HTTPException(status_code=409, detail="Fixed-point result is not available yet")
+    try:
+        return read_fixed_points(download_artifact(run.artifact_key), offset, limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except S3Error as exc:
+        raise HTTPException(status_code=404, detail="Artifact not found") from exc
+
+
 def _get_visible_run(run_id: uuid.UUID, db: Session) -> Run:
     run = db.get(Run, run_id)
     if run is None:

@@ -26,6 +26,23 @@
   font-weight: 400;
 }
 
+.fixed-points-dialog .tree-heading { align-items: center; justify-content: space-between; }
+.fixed-points-dialog .tree-heading h2 { margin: 0; font-size: 1.1rem; }
+.fixed-points-dialog .tree-close { margin-left: auto; }
+.fixed-points-bounds { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fixed-points-accuracy { margin-top: 20px; }
+.fixed-points-accuracy .tree-fields { margin-top: 16px; }
+.fixed-points-result-controls { margin-bottom: 16px; }
+.fixed-points-dialog canvas { cursor: crosshair; background: #fff; }
+.fixed-points-legend { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: 16px; font-size: 12px; }
+.fixed-points-legend span, .fixed-points-type { display: inline-flex; align-items: center; gap: 7px; }
+.fixed-points-legend i, .fixed-points-type i { display: inline-block; width: 14px; height: 10px; border: 1px solid #ffffff55; }
+.fixed-points-inspector { font-size: 12px; }
+.fixed-points-inspector summary { cursor: pointer; }
+.fixed-points-inspector > .field { margin-top: 16px; }
+.fixed-points-table { overflow-x: auto; }
+.fixed-points-table td, .fixed-points-table th { padding: 8px; text-align: left; white-space: nowrap; }
+
 * {
   box-sizing: border-box;
 }

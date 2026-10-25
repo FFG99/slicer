@@ -2,6 +2,32 @@
 # C++ implements writers internally (Heatmap, trajectory store, etc.);
 # only calculation_type is exposed in API and schemas.
 
+fixed_point_diagram:
+  description: Fixed-point bifurcation diagram for 1D/2D maps using multistart damped Newton.
+  parameters:
+    - {name: start, type: object, description: Full parameter set at segment endpoint A}
+    - {name: end, type: object, description: Full parameter set at segment endpoint B}
+    - {name: parameter, type: string, options_source: system.parameters}
+    - {name: model_parameters, type: object}
+    - {name: parameter_min, type: number}
+    - {name: parameter_max, type: number}
+    - {name: state_min, type: array, required: true}
+    - {name: state_max, type: array, required: true}
+    - {name: steps, type: integer, default: 201, range: [2, 1000]}
+    - {name: seeds_per_axis, type: integer, default: 9, range: [2, 32]}
+    - {name: max_iterations, type: integer, default: 40, range: [1, 100]}
+    - {name: tolerance, type: number, default: 1.0e-10, range: [1.0e-13, 1.0e-4]}
+    - {name: derivative_step, type: number, default: 1.0e-5, range: [1.0e-7, 1.0e-2]}
+    - {name: stability_tolerance, type: number, default: 1.0e-6, range: [1.0e-9, 0.01]}
+  artifact:
+    hdf5_path: /artifacts/main
+    datasets:
+      fixed_points_json: scalar JSON containing parameter samples, roots, multipliers and Newton diagnostics
+  frame:
+    space: fixed_point_diagram
+    sweep_roles: [sweep]
+  overlay_with: []
+
 attraction_map:
   description: >
     Map of attractor types over a 2D parameter sweep (bifurcation-style heatmap).

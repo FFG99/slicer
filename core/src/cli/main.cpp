@@ -1,7 +1,9 @@
 #include <cstdlib>
+#include <algorithm>
 #include <fstream>
 #include "slicer/systems/SystemManager.hpp"
 #include "slicer/calculations/Bifurcation.hpp"
+#include "slicer/calculations/FixedPoints.hpp"
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -87,7 +89,25 @@ int main(int argc, char** argv) {
     auto artifact = slicer::ArtifactFile::create(output_path, job.calculation_type,
                                                  job.system, job.parameters);
 
-    if (job.calculation_type == "attraction_map") {
+    if (job.calculation_type == "fixed_point_diagram") {
+      manager.load_systems(systems_dir);
+      auto system = manager.create_system(job.system);
+      auto result = slicer::fixed_point_diagram(*system, job.parameters);
+      slicer::CoordinateFrame frame;
+      frame.system = job.system;
+      frame.space = "fixed_point_diagram";
+      frame.parameters = result.at("start").get<std::map<std::string, double>>();
+      for (const auto& name : system->get_parameter_names())
+        if (result["start"][name] != result["end"][name]) frame.parameters.erase(name);
+      const double first = result["samples"].front()["parameter"].get<double>();
+      const double last = result["samples"].back()["parameter"].get<double>();
+      frame.axes.push_back({result.at("parameter").get<std::string>(), "sweep", 0,
+          std::min(first, last), std::max(first, last),
+          result["samples"].size()});
+      artifact.write_frame(frame);
+      artifact.write_fixed_points(result);
+      artifact.mark_finished();
+    } else if (job.calculation_type == "attraction_map") {
       const auto params = slicer::parse_attraction_map_params(job.parameters);
       slicer::AttractionMapCalculator calculator(params, job.system, systems_dir);
       calculator.run(artifact);

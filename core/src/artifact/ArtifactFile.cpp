@@ -119,6 +119,14 @@ CoordinateFrame ArtifactFile::read_frame() const {
   return nlohmann::json::parse(json).get<CoordinateFrame>();
 }
 
+void ArtifactFile::write_fixed_points(const nlohmann::json& result) {
+  if (!writable_) throw std::runtime_error("Artifact file is not writable");
+  const std::string json = result.dump();
+  const H5::StrType type = variable_string_type(json.size());
+  auto dataset = main_group_.createDataSet("fixed_points_json", type, H5S_SCALAR);
+  dataset.write(json.c_str(), type);
+}
+
 void ArtifactFile::create_main_grid(size_t rows, size_t cols) {
   if (!writable_) {
     throw std::runtime_error("Artifact file is not writable");

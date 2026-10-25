@@ -22,6 +22,7 @@ class ArtifactFile {
   explicit ArtifactFile(const std::string& filepath);
 
   void write_frame(const CoordinateFrame& frame);
+  void write_fixed_points(const nlohmann::json& result);
   CoordinateFrame read_frame() const;
 
   void create_main_grid(size_t rows, size_t cols);

@@ -37,6 +37,12 @@ def validate_run_request(
 
     system_def = validate_system_available(system)
     _validate_parameters(calculations[calculation_type], parameters, system_def)
+    if calculation_type == "fixed_point_diagram":
+        from slicer_api.fixed_points import validate_fixed_points
+        try:
+            validate_fixed_points(parameters, system_def)
+        except (ValueError, KeyError, TypeError) as exc:
+            raise ComputationValidationError(str(exc)) from exc
 
 
 def _validate_parameters(

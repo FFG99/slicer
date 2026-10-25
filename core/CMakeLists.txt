@@ -45,6 +45,7 @@ else()
 endif()
 
 set(SLICER_CORE_SOURCES
+  src/calculations/FixedPoints.cpp
   src/calculations/Bifurcation.cpp
   src/artifact/CoordinateFrame.cpp
   src/artifact/ArtifactFile.cpp
@@ -178,3 +179,5 @@ endif()
 add_executable(test_bifurcation tests/test_bifurcation.cpp)
 target_link_libraries(test_bifurcation PRIVATE GTest::gtest_main slicer_core)
 add_test(NAME test_bifurcation COMMAND test_bifurcation)
+
+add_slicer_test(test_fixed_points tests/test_fixed_points.cpp)

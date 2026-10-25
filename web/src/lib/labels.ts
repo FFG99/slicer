@@ -1,4 +1,5 @@
 export const CALCULATION_LABELS: Record<string, string> = {
+  fixed_point_diagram: "Бифуркации неподвижных точек",
   attraction_map: "Attraction map",
   attraction_map_composition: "Attraction map · EP/P/NP",
   attraction_map_periods: "Attraction map · periods",

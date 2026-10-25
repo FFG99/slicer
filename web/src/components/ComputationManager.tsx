@@ -498,12 +498,14 @@ export function ComputationManager() {
                 <Link
                   className="button-link"
                   to={
-                    selectedRun.calculation_type === POOL_CALCULATION_TYPE
+                    selectedRun.calculation_type === "fixed_point_diagram"
+                      ? `/?fixed_points=${selectedRun.id}`
+                      : selectedRun.calculation_type === POOL_CALCULATION_TYPE
                       ? `/?run=${selectedRun.id}&calculation=${selectedRun.calculation_type}&system=${selectedRun.system}&panel=pool`
                       : `/?run=${selectedRun.id}&calculation=${selectedRun.calculation_type}&system=${selectedRun.system}`
                   }
                 >
-                  Open in Explorer
+                  {selectedRun.calculation_type === "fixed_point_diagram" ? "Открыть диаграмму" : "Open in Explorer"}
                 </Link>
                 {selectedRun.artifact_url && (
                   <button

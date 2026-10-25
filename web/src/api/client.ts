@@ -2,6 +2,10 @@ import type { GridData, RegistryResponse, Run, RunList, SystemsResponse, Traject
 
 const base = "/api";
 
+export function getFixedPoints(runId: string) {
+  return request<import("../lib/fixedPoints").FixedPointResult>(`/runs/${encodeURIComponent(runId)}/fixed-points`);
+}
+
 export interface GridQuery {
   dataset?: "values" | "composition" | "periods";
   max_dim?: number;

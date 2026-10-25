@@ -1,4 +1,6 @@
 import { BifurcationPanel, type ParameterPoint } from "../components/BifurcationPanel";
+import { FixedPointsPanel, SavedFixedPointsPanel } from "../components/FixedPointsPanel";
+import { supportsFixedPointDiagram } from "../lib/fixedPoints";
 import { useSearchParams } from "react-router-dom";
 import {
   useCallback,
@@ -82,8 +84,9 @@ import {
 type LinkedRunTarget = "pool";
 
 export function ExplorerPage() {
-  const [searchParams] = useSearchParams();
-  const [segmentTool,setSegmentTool]=useState<"tree"|"phase">("tree");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const savedFixedPointRunId = searchParams.get('fixed_points');
+  const [segmentTool,setSegmentTool]=useState<"tree"|"diagram"|"phase">("tree");
   const [treeOpen, setTreeOpen] = useState(false);
   const [treeSystemInfo, setTreeSystemInfo] = useState<SystemDefinition | null>(null);
   const [treePoints, setTreePoints] = useState<ParameterPoint[]>([]);
@@ -179,6 +182,10 @@ export function ExplorerPage() {
     return () => { live = false; };
   }, [mapFrame?.system]);
   const isParameterPlane = mapFrame?.space === "parameter_plane";
+  const mapFixedParameters = (runs.find(r => r.id === visibleMapLayer?.id)?.parameters.static_parameters as Record<string, number>) ?? mapFrame?.parameters ?? {};
+  const segmentEndpoints = treePoints.map(point => Object.fromEntries((treeSystemInfo?.parameters ?? []).map(name => [name,
+    name === mapAxisNames.x ? point.x : name === mapAxisNames.y ? point.y : mapFixedParameters[name],
+  ])));
   const effectivePoolPoint = pinnedPoint ?? manualParameterPoint;
   const poolStandaloneMode = !isParameterPlane;
 
@@ -1096,7 +1103,11 @@ export function ExplorerPage() {
           </button>
         </div>
 
-        {treeOpen && treePoints.length === 2 && treeSystemInfo && isParameterPlane && <BifurcationPanel key={visibleMapLayer?.id}
+        {savedFixedPointRunId && <SavedFixedPointsPanel runId={savedFixedPointRunId} onClose={() => setSearchParams(current => { const next = new URLSearchParams(current); next.delete('fixed_points'); return next; }, { replace: true })} />}
+        {treeOpen && segmentTool === 'diagram' && treePoints.length === 2 && treeSystemInfo && isParameterPlane && supportsFixedPointDiagram(treeSystemInfo.variables.length) && <FixedPointsPanel key={`${visibleMapLayer?.id}-diagram`}
+          system={mapFrame!.system} info={treeSystemInfo} start={segmentEndpoints[0]} end={segmentEndpoints[1]}
+          onSelect={() => setTreePoints([])} onClose={() => setTreeOpen(false)} />}
+        {treeOpen && segmentTool !== 'diagram' && treePoints.length === 2 && treeSystemInfo && isParameterPlane && <BifurcationPanel key={visibleMapLayer?.id}
           initialView={segmentTool} system={mapFrame!.system} info={treeSystemInfo} axes={mapAxisNames} points={treePoints}
           fixed={(runs.find(r=>r.id===visibleMapLayer?.id)?.parameters.static_parameters as Record<string,number>) ?? mapFrame!.parameters ?? {}}
           onSelect={()=>setTreePoints([])} onClose={()=>setTreeOpen(false)}/>}
@@ -1119,10 +1130,10 @@ export function ExplorerPage() {
         <div className="explorer-panel-map">
           <div className="explorer-panel-body">
             <HeatmapViewer
-              toolbarTools={isParameterPlane && <>{(['tree','phase'] as const).map(tool=><button key={tool} className="tree-tool" aria-label={tool==='tree'?'Бифуркационное дерево':'Фазовый портрет вдоль отрезка'} aria-pressed={treeOpen && segmentTool===tool} disabled={!treeSystemInfo}
+              toolbarTools={isParameterPlane && <>{(['tree','diagram','phase'] as const).filter(tool => tool !== 'diagram' || (treeSystemInfo && supportsFixedPointDiagram(treeSystemInfo.variables.length))).map(tool=><button key={tool} className="tree-tool" aria-label={tool==='tree'?'Бифуркационное дерево':tool==='diagram'?'Бифуркационная диаграмма':'Фазовый портрет вдоль отрезка'} aria-pressed={treeOpen && segmentTool===tool} disabled={!treeSystemInfo}
                 onClick={()=>{setTreePoints([]);setSegmentTool(tool);setTreeOpen(!treeOpen || segmentTool!==tool);}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={tool==='tree'?'M6 17L18 7':'M4 16C4 2 20 2 20 12S4 22 4 12'} stroke="currentColor" strokeWidth="1.5"/></svg>
-                {treeOpen && segmentTool===tool ? (treePoints.length===0?'Выберите точку A':'Выберите точку B') : tool==='tree'?'Дерево':'Фазовый портрет'}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={tool==='tree'?'M6 17L18 7':tool==='diagram'?'M4 18C8 18 9 5 14 5M4 6C8 6 9 18 20 18':'M4 16C4 2 20 2 20 12S4 22 4 12'} stroke="currentColor" strokeWidth="1.5"/></svg>
+                {treeOpen && segmentTool===tool ? (treePoints.length===0?'Выберите точку A':'Выберите точку B') : tool==='tree'?'Дерево':tool==='diagram'?'Бифуркационная диаграмма':'Фазовый портрет'}
               </button>)}</>}
               pointToolActive={treeOpen}
               onNavigationToolSelect={()=>setTreeOpen(false)}

@@ -24,7 +24,8 @@
         "parameter_plane",
         "ic_plane",
         "phase_plane",
-        "time_series"
+        "time_series",
+        "fixed_point_diagram"
       ],
       "description": "Semantic space: parameter sweep, initial-condition plane, phase portrait, or time series"
     },
